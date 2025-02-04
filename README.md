@@ -1,23 +1,38 @@
 # Linx Processor CNAB
 
-Processador inteligente de arquivos CNAB para otimização de importação no ERP Linx e-millennium.
+Otimizador de arquivos de retorno bancário para o ERP Linx e-millennium.
 
 ## 📋 Sobre o Projeto
 
-O Linx Processor CNAB é uma ferramenta especializada para processar arquivos de retorno bancário (.RET) do Banco do Brasil e Bradesco, focando em:
+Os bancos enviam arquivos de retorno (.RET) contendo diversas instruções referentes aos boletos, como:
+- Liquidações
+- Baixas
+- Protestos
+- Alterações de vencimento
+- Outros eventos
 
-- **Filtragem Inteligente**: Seleciona apenas as instruções bancárias específicas (ex: liquidações) do arquivo CNAB
-- **Otimização de Importação**: Reduz o tamanho do arquivo removendo instruções desnecessárias
-- **Integração com e-millennium**: Melhora a performance e reduz erros na importação do ERP
-- **Processamento Automático**: Monitora a pasta e processa novos arquivos automaticamente
+O desafio é que esses arquivos podem conter muitas informações que nem sempre são necessárias para o processamento no ERP Linx e-Millennium, podendo gerar:
+- Lentidão na importação
+- Erros de processamento
+- Dados desnecessários no sistema
+- Maior tempo de processamento
 
-### 🎯 Benefícios
+### 🎯 Solução
 
-- Redução de erros na importação do ERP
-- Aumento de performance no processamento
-- Eliminação de instruções desnecessárias
-- Backup automático dos arquivos originais
-- Rastreamento de processamento
+O Linx Processor CNAB foi desenvolvido para solucionar esse problema, permitindo:
+- Filtrar apenas as instruções desejadas (ex: somente liquidações)
+- Remover informações desnecessárias do arquivo
+- Processar arquivos automaticamente assim que são recebidos
+- Manter backup dos arquivos originais
+- Rastrear todo o processamento realizado
+
+### 💡 Benefícios
+
+- **Importação mais Limpa**: Apenas as instruções relevantes são mantidas
+- **Maior Performance**: Arquivos menores são processados mais rapidamente
+- **Menos Erros**: Redução de falhas na importação do ERP
+- **Automatização**: Processamento automático de novos arquivos
+- **Segurança**: Backup automático dos arquivos originais
 
 ## 🚀 Começando
 
@@ -69,21 +84,33 @@ BRADESCO_ENABLE=true  # Habilita/desabilita processamento
 CHECK_INTERVAL=5      # Intervalo em segundos para verificar novos arquivos
 ```
 
+### 📋 Códigos de Operação
+
+Os códigos mais comuns são:
+- `06`: Liquidação
+- `09`: Baixa
+- `02`: Entrada Confirmada
+- `03`: Entrada Rejeitada
+
+Consulte a documentação do seu banco para outros códigos.
+
 ## 📦 Como Usar
 
 1. Coloque os arquivos .RET na pasta `cnab`
-2. O sistema processará automaticamente os arquivos, gerando:
-   - Cópia do arquivo original com timestamp
-   - Arquivo processado apenas com as instruções desejadas
-3. Os arquivos processados estarão prontos para importação no e-millennium
+2. O sistema automaticamente:
+   - Identifica o banco (Bradesco ou Banco do Brasil)
+   - Faz backup do arquivo original
+   - Filtra apenas as operações configuradas
+   - Gera o novo arquivo processado
+3. Importe o arquivo processado no e-millennium
 
-### 📄 Formato dos Arquivos
+### 📄 Arquivos Gerados
 
-Para cada arquivo processado, o sistema gera:
-- `ORIGINAL_1234567890.RET` - Backup do arquivo original
-- `ORIGINAL_1234567890_alterado.RET` - Arquivo filtrado para importação
+Para cada arquivo processado (exemplo: `ARQUIVO.RET`), o sistema gera:
+- `ARQUIVO_1234567890.RET` - Backup do arquivo original com timestamp
+- `ARQUIVO_1234567890_alterado.RET` - Arquivo filtrado pronto para importação
 
-## 🛠️ Construído com
+## 🛠️ Tecnologias
 
 * [Python](https://www.python.org/) - Linguagem de programação
 * [python-dotenv](https://pypi.org/project/python-dotenv/) - Gerenciamento de configurações
