@@ -1,0 +1,26 @@
+# Arquivos de ambiente
+.env
+.env.local
+.env.*
+!.env.example
+
+# Diretório de arquivos CNAB
+/cnab/*
+!/cnab/.gitkeep
+
+# Cache Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Ambiente virtual
+venv/
+env/
+ENV/
+
+# Logs
+*.log
+
+# Arquivos do sistema
+.DS_Store
+Thumbs.db
