@@ -1,19 +1,29 @@
 # Linx Processor CNAB
 
-Processador de arquivos CNAB para transações financeiras.
+Processador inteligente de arquivos CNAB para otimização de importação no ERP Linx e-millennium.
 
 ## 📋 Sobre o Projeto
 
-Este projeto é responsável por processar arquivos CNAB contendo transações financeiras, realizando a leitura, validação e armazenamento dos dados em banco de dados.
+O Linx Processor CNAB é uma ferramenta especializada para processar arquivos de retorno bancário (.RET) do Banco do Brasil e Bradesco, focando em:
+
+- **Filtragem Inteligente**: Seleciona apenas as instruções bancárias específicas (ex: liquidações) do arquivo CNAB
+- **Otimização de Importação**: Reduz o tamanho do arquivo removendo instruções desnecessárias
+- **Integração com e-millennium**: Melhora a performance e reduz erros na importação do ERP
+- **Processamento Automático**: Monitora a pasta e processa novos arquivos automaticamente
+
+### 🎯 Benefícios
+
+- Redução de erros na importação do ERP
+- Aumento de performance no processamento
+- Eliminação de instruções desnecessárias
+- Backup automático dos arquivos originais
+- Rastreamento de processamento
 
 ## 🚀 Começando
-
-Estas instruções permitirão que você obtenha uma cópia do projeto em operação na sua máquina local para fins de desenvolvimento e teste.
 
 ### 📋 Pré-requisitos
 
 - Python 3.8+
-- PostgreSQL
 - pip (gerenciador de pacotes Python)
 
 ### 🔧 Instalação
@@ -40,23 +50,43 @@ pip install -r requirements.txt
 4. Configure as variáveis de ambiente
 ```bash
 cp .env.example .env
-# Edite o arquivo .env com suas configurações
 ```
 
-## 📦 Estrutura do Projeto
+### ⚙️ Configuração
 
+Edite o arquivo `.env` com suas configurações:
+
+```ini
+# Configurações Banco do Brasil
+BB_OPERACAO=06        # Códigos das operações desejadas (separados por vírgula)
+BB_ENABLE=true        # Habilita/desabilita processamento
+
+# Configurações Bradesco
+BRADESCO_OPERACAO=06  # Códigos das operações desejadas (separados por vírgula)
+BRADESCO_ENABLE=true  # Habilita/desabilita processamento
+
+# Configurações Gerais
+CHECK_INTERVAL=5      # Intervalo em segundos para verificar novos arquivos
 ```
-linx_processor_cnab/
-├── cnab/               # Diretório para arquivos CNAB
-├── process_cnab.py     # Script principal
-├── requirements.txt    # Dependências do projeto
-└── README.md          # Documentação
-```
+
+## 📦 Como Usar
+
+1. Coloque os arquivos .RET na pasta `cnab`
+2. O sistema processará automaticamente os arquivos, gerando:
+   - Cópia do arquivo original com timestamp
+   - Arquivo processado apenas com as instruções desejadas
+3. Os arquivos processados estarão prontos para importação no e-millennium
+
+### 📄 Formato dos Arquivos
+
+Para cada arquivo processado, o sistema gera:
+- `ORIGINAL_1234567890.RET` - Backup do arquivo original
+- `ORIGINAL_1234567890_alterado.RET` - Arquivo filtrado para importação
 
 ## 🛠️ Construído com
 
 * [Python](https://www.python.org/) - Linguagem de programação
-* [PostgreSQL](https://www.postgresql.org/) - Banco de dados
+* [python-dotenv](https://pypi.org/project/python-dotenv/) - Gerenciamento de configurações
 
 ## 📄 Licença
 
