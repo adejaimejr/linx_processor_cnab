@@ -1,0 +1,44 @@
+================================================================================
+RELATÓRIO DE PROCESSAMENTO CNAB - 2025-06-09 11:21:22
+================================================================================
+
+📊 INFORMAÇÕES GERAIS:
+  • Banco identificado: BB
+  • Total de linhas no arquivo: 199
+  • Linhas válidas: 199 (100.00%)
+  • Linhas inválidas: 0 (0.00%)
+  • Linhas mantidas: 44 (22.11%)
+
+⏱️ PERFORMANCE:
+  • Tempo de processamento: 0.09 segundos
+  • Velocidade média: 2206.57 linhas/segundo
+
+🔍 ANÁLISE DE OPERAÇÕES:
+  • Operação '02': 85 linhas (0.00%) ✗
+  • Operação '06': 42 linhas (100.00%) ✓
+  • Operação '09': 20 linhas (0.00%) ✗
+  • Operação '28': 32 linhas (0.00%) ✗
+  • Operação '72': 18 linhas (0.00%) ✗
+
+💰 SEPARAÇÃO POR TIPO DE VALOR:
+  • Operações normais (tipo 2): 11 (11.96%)
+  • Operações antecipadas (tipo 1): 81 (88.04%)
+  • Operações com tipo não identificado: 105 (52.76%)
+
+📁 ARQUIVOS GERADOS (7):
+  1. CBR643251606202520239.ret (78.12 KB)
+     Local: C:\i92tech\linx_processor_cnab_\cnab
+  2. CBR643251606202520239_alterado.ret (17.27 KB)
+     Local: \\10.10.1.7\cnab\CONVERTER
+  3. CBR643251606202520239_normal.ret (5.10 KB)
+     Local: \\10.10.1.7\cnab\CONVERTER
+  4. CBR643251606202520239_antecipado.ret (12.95 KB)
+     Local: \\10.10.1.7\cnab\CONVERTER
+  5. CBR643251606202520239_alterado.ret (17.27 KB)
+     Local: C:\i92tech\linx_processor_cnab_\cnab
+  6. CBR643251606202520239_normal.ret (5.10 KB)
+     Local: C:\i92tech\linx_processor_cnab_\cnab
+  7. CBR643251606202520239_antecipado.ret (12.95 KB)
+     Local: C:\i92tech\linx_processor_cnab_\cnab
+
+================================================================================

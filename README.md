@@ -25,6 +25,7 @@ O Linx Processor CNAB foi desenvolvido para solucionar esse problema, permitindo
 - Processar arquivos automaticamente assim que são recebidos
 - Manter backup dos arquivos originais
 - Rastrear todo o processamento realizado
+- **Gerar CSV de boletos antecipados** com dados estruturados para análise
 
 ### 💡 Benefícios
 
@@ -33,6 +34,7 @@ O Linx Processor CNAB foi desenvolvido para solucionar esse problema, permitindo
 - **Menos Erros**: Redução de falhas na importação do ERP
 - **Automatização**: Processamento automático de novos arquivos
 - **Segurança**: Backup automático dos arquivos originais
+- **Análise de Dados**: CSV estruturado para boletos antecipados
 
 ## 🚀 Começando
 
@@ -75,10 +77,12 @@ Edite o arquivo `.env` com suas configurações:
 # Configurações Banco do Brasil
 BB_OPERACAO=06        # Códigos das operações desejadas (separados por vírgula)
 BB_ENABLE=true        # Habilita/desabilita processamento
+BB_SEPARAR_ANTECIPACAO=true # Habilita separação de arquivos antecipados e geração de CSV
 
 # Configurações Bradesco
 BRADESCO_OPERACAO=06  # Códigos das operações desejadas (separados por vírgula)
 BRADESCO_ENABLE=true  # Habilita/desabilita processamento
+BRADESCO_SEPARAR_ANTECIPACAO=false # Habilita separação de arquivos antecipados
 
 # Configurações Gerais
 CHECK_INTERVAL=5      # Intervalo em segundos para verificar novos arquivos
@@ -109,6 +113,23 @@ Consulte a documentação do seu banco para outros códigos.
 Para cada arquivo processado (exemplo: `ARQUIVO.RET`), o sistema gera:
 - `ARQUIVO_1234567890.RET` - Backup do arquivo original com timestamp
 - `ARQUIVO_1234567890_alterado.RET` - Arquivo filtrado pronto para importação
+- `ARQUIVO_1234567890_normal.RET` - Operações normais (se separação habilitada)
+- `ARQUIVO_1234567890_antecipado.RET` - Operações antecipadas (se separação habilitada)
+- `ARQUIVO_1234567890_antecipado.csv` - **CSV com dados dos boletos antecipados**
+
+#### 📈 Formato do CSV
+
+O CSV contém os seguintes campos:
+- **n_documento**: Número do documento
+- **valor**: Valor do boleto formatado como XXX,YY
+- **data_pagamento**: Data de vencimento no formato DD/MM/AAAA
+
+```csv
+n_documento,valor,data_pagamento
+91033-E,"845,95",24/04/2025
+91058-E,"607,95",24/04/2025
+91124-E,"494,97",24/04/2025
+```
 
 ## 🛠️ Tecnologias
 

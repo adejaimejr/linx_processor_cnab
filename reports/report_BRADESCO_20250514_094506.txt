@@ -1,0 +1,35 @@
+================================================================================
+RELATÓRIO DE PROCESSAMENTO CNAB - 2025-05-14 09:45:06
+================================================================================
+
+📊 INFORMAÇÕES GERAIS:
+  • Banco identificado: BRADESCO
+  • Total de linhas no arquivo: 18
+  • Linhas válidas: 18 (100.00%)
+  • Linhas inválidas: 0 (0.00%)
+  • Linhas mantidas: 5 (27.78%)
+
+⏱️ PERFORMANCE:
+  • Tempo de processamento: 0.07 segundos
+  • Velocidade média: 253.37 linhas/segundo
+
+🔍 ANÁLISE DE OPERAÇÕES:
+  • Operação '06': 3 linhas (100.00%) ✓
+  • Operação '09': 13 linhas (0.00%) ✗
+
+💰 SEPARAÇÃO POR TIPO DE VALOR:
+  • Operações normais (tipo 2): 0 (0.00%)
+  • Operações antecipadas (tipo 1): 14 (100.00%)
+  • Operações com tipo não identificado: 2 (11.11%)
+
+📁 ARQUIVOS GERADOS (4):
+  1. DS140500.RET (7.07 KB)
+     Local: C:\i92tech\linx_processor_cnab_\cnab
+  2. DS140500_20250514094506_alterado.RET (1.96 KB)
+     Local: \\10.10.1.7\cnab\CONVERTER
+  3. DS140500_20250514094506.RET (7.07 KB)
+     Local: \\10.10.1.7\cnab\CONVERTER
+  4. DS140500_20250514094506_alterado.RET (1.96 KB)
+     Local: C:\i92tech\linx_processor_cnab_\cnab
+
+================================================================================

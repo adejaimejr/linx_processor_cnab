@@ -6,6 +6,13 @@ from datetime import datetime
 from dotenv import load_dotenv
 import re
 
+# Importa utilitários para geração de CSV
+try:
+    from generate_csv_utils import generate_csv_for_antecipated_operations
+except ImportError:
+    print("⚠️ Módulo generate_csv_utils não encontrado. Funcionalidade CSV desabilitada.")
+    generate_csv_for_antecipated_operations = None
+
 # Carrega as variáveis de ambiente
 load_dotenv()
 
@@ -562,6 +569,22 @@ def process_cnab_file(arquivo, operacoes_desejadas=None, banco=None, separar_ant
                 tamanho_antecipado = os.path.getsize(arquivo_antecipado) / 1024  # KB
                 print(f"💾 Arquivo antecipado salvo: {os.path.basename(arquivo_antecipado)} ({tamanho_antecipado:.2f} KB)")
                 arquivos_gerados.append((arquivo_antecipado, tamanho_antecipado))
+                
+                # Gerar CSV para operações antecipadas
+                if generate_csv_for_antecipated_operations:
+                    try:
+                        sucesso_csv, mensagem_csv, caminho_csv = generate_csv_for_antecipated_operations(arquivo_antecipado)
+                        if sucesso_csv and caminho_csv:
+                            tamanho_csv = os.path.getsize(caminho_csv) / 1024  # KB
+                            print(f"📊 CSV antecipado gerado: {os.path.basename(caminho_csv)} ({tamanho_csv:.2f} KB)")
+                            arquivos_gerados.append((caminho_csv, tamanho_csv))
+                            relatorio.append(f"📊 CSV: {mensagem_csv}")
+                        else:
+                            print(f"⚠️ Falha ao gerar CSV: {mensagem_csv}")
+                            relatorio.append(f"⚠️ CSV: {mensagem_csv}")
+                    except Exception as e:
+                        print(f"❌ Erro ao gerar CSV: {str(e)}")
+                        relatorio.append(f"❌ Erro CSV: {str(e)}")
             else:
                 print("⚠️ Nenhuma operação antecipada encontrada, arquivo antecipado não gerado")
                 relatorio.append("⚠️ ALERTA: Nenhuma operação antecipada encontrada")
@@ -601,6 +624,18 @@ def process_cnab_file(arquivo, operacoes_desejadas=None, banco=None, separar_ant
                             tamanho = os.path.getsize(destino_antecipado) / 1024  # KB
                             print(f"💾 Arquivo antecipado copiado: {os.path.basename(destino_antecipado)} ({tamanho:.2f} KB)")
                             arquivos_gerados.append((destino_antecipado, tamanho))
+                            
+                            # Copia o CSV antecipado se existir
+                            csv_antecipado = arquivo_antecipado.replace('.ret', '.csv').replace('.RET', '.csv')
+                            if os.path.exists(csv_antecipado):
+                                destino_csv = os.path.join(output_dir, os.path.basename(csv_antecipado))
+                                try:
+                                    shutil.copy2(csv_antecipado, destino_csv)
+                                    tamanho_csv = os.path.getsize(destino_csv) / 1024  # KB
+                                    print(f"📊 CSV antecipado copiado: {os.path.basename(destino_csv)} ({tamanho_csv:.2f} KB)")
+                                    arquivos_gerados.append((destino_csv, tamanho_csv))
+                                except Exception as e:
+                                    print(f"❌ Erro ao copiar CSV antecipado para {output_dir}: {str(e)}")
                         except Exception as e:
                             print(f"❌ Erro ao copiar arquivo antecipado para {output_dir}: {str(e)}")
     
