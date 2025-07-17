@@ -1,8 +1,8 @@
 # Arquivos de ambiente
-.env
-.env.local
-.env.*
-!.env.example
+#.env
+#.env.local
+#.env.*
+#!.env.example
 
 # Diretório de arquivos CNAB
 /cnab/*
@@ -36,9 +36,9 @@ share/python-wheels/
 *.egg
 
 # Ambiente virtual
-venv/
-env/
-ENV/
+#venv/
+#env/
+#ENV/
 
 # Logs
 *.log
