@@ -1,12 +1,22 @@
 # Arquivos de ambiente
-#.env
-#.env.local
-#.env.*
-#!.env.example
+.env
+.env.local
+.env.*
+!.env.example
 
 # Diretório de arquivos CNAB
 /cnab/*
 !/cnab/.gitkeep
+
+# Relatórios e arquivos processados
+/reports/
+/processed_files.md
+
+# Arquivos de saída
+*.ret
+*.csv
+*.xls
+*.xlsx
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -8,10 +8,10 @@ import re
 
 # Importa utilitários para geração de CSV
 try:
-    from generate_csv_utils import generate_csv_for_antecipated_operations
+    from generate_csv_utils import generate_output_for_antecipated_operations
 except ImportError:
-    print("⚠️ Módulo generate_csv_utils não encontrado. Funcionalidade CSV desabilitada.")
-    generate_csv_for_antecipated_operations = None
+    print("⚠️ Módulo generate_csv_utils não encontrado. Funcionalidade de geração de arquivos desabilitada.")
+    generate_output_for_antecipated_operations = None
 
 # Carrega as variáveis de ambiente
 load_dotenv()
@@ -165,7 +165,7 @@ def generate_processing_report(banco, total_lines, linhas_validas, linhas_invali
     Args:
         banco (str): Nome do banco identificado
         total_lines (int): Total de linhas no arquivo
-        linhas_validas (int): Número de linhas válidas processadas
+        linhas_validas (int): Número de linhas válidas processadas (excluindo header/trailer)
         linhas_invalidas (int): Número de linhas inválidas encontradas
         lines_kept (int): Número de linhas mantidas no arquivo final
         count_por_operacao (dict): Dicionário com contagem por código de operação
@@ -187,21 +187,19 @@ def generate_processing_report(banco, total_lines, linhas_validas, linhas_invali
     report.append(f"\n📊 INFORMAÇÕES GERAIS:")
     report.append(f"  • Banco identificado: {banco}")
     report.append(f"  • Total de linhas no arquivo: {total_lines}")
-    report.append(f"  • Linhas válidas: {linhas_validas} ({(linhas_validas/max(1, total_lines-2)*100):.2f}%)")
-    report.append(f"  • Linhas inválidas: {linhas_invalidas} ({(linhas_invalidas/max(1, total_lines-2)*100):.2f}%)")
-    report.append(f"  • Linhas mantidas: {lines_kept} ({(lines_kept/max(1, total_lines-2)*100):.2f}%)")
     
-    # Detalhes de tempo de processamento
-    report.append(f"\n⏱️ PERFORMANCE:")
-    if tempo_total < 1:
-        tempo_ms = tempo_total * 1000
-        report.append(f"  • Tempo de processamento: {tempo_ms:.2f} ms")
+    # Calcular registros de dados (excluindo header e trailer)
+    # linhas_validas já deve representar apenas os registros de dados válidos
+    registros_dados_total = max(1, total_lines - 2)  # Total de registros de dados possíveis
+    
+    if registros_dados_total > 0:
+        report.append(f"  • Registros válidos (dados): {linhas_validas} ({(linhas_validas/registros_dados_total*100):.2f}%)")
+        report.append(f"  • Registros inválidos: {linhas_invalidas} ({(linhas_invalidas/registros_dados_total*100):.2f}%)")
+        report.append(f"  • Registros mantidos: {lines_kept} ({(lines_kept/registros_dados_total*100):.2f}%)")
     else:
-        report.append(f"  • Tempo de processamento: {tempo_total:.2f} segundos")
-    
-    if total_lines > 2 and tempo_total > 0:
-        linhas_por_segundo = (total_lines-2) / tempo_total
-        report.append(f"  • Velocidade média: {linhas_por_segundo:.2f} linhas/segundo")
+        report.append(f"  • Registros válidos (dados): {linhas_validas}")
+        report.append(f"  • Registros inválidos: {linhas_invalidas}")
+        report.append(f"  • Registros mantidos: {lines_kept}")
     
     # Detalhes das operações
     report.append(f"\n🔍 ANÁLISE DE OPERAÇÕES:")
@@ -231,16 +229,25 @@ def generate_processing_report(banco, total_lines, linhas_validas, linhas_invali
     
     # Arquivos gerados
     if output_files:
-        report.append(f"\n📁 ARQUIVOS GERADOS ({len(output_files)}):")
-        for idx, file_path in enumerate(output_files, 1):
+        # Remover duplicatas mantendo a ordem
+        unique_files = []
+        seen_files = set()
+        for file_path in output_files:
+            if file_path not in seen_files:
+                unique_files.append(file_path)
+                seen_files.add(file_path)
+        
+        report.append(f"\n📁 ARQUIVOS GERADOS ({len(unique_files)}):")
+        for idx, file_path in enumerate(unique_files, 1):
             file_name = os.path.basename(file_path)
             file_dir = os.path.dirname(file_path)
             if os.path.exists(file_path):
                 file_size = os.path.getsize(file_path) / 1024  # KB
                 report.append(f"  {idx}. {file_name} ({file_size:.2f} KB)")
-                report.append(f"     Local: {file_dir}")
+                report.append(f"     📂 {file_dir}")
             else:
-                report.append(f"  {idx}. {file_name} (arquivo não encontrado)")
+                report.append(f"  {idx}. {file_name} ⚠️ (arquivo não encontrado)")
+                report.append(f"     📂 {file_dir}")
     
     report.append("\n" + "="*80)
     
@@ -476,8 +483,6 @@ def process_cnab_file(arquivo, operacoes_desejadas=None, banco=None, separar_ant
                     print(f"⚠️ Linha {i+1} ignorada: tamanho insuficiente ({len(linha.strip())} caracteres)")
                     continue
                 
-                linhas_validas += 1
-                
                 # Se for header (primeira linha) ou trailer (última linha), manter sempre
                 if i == 0 or i == len(linhas) - 1:
                     linhas_alteradas.append(linha)
@@ -485,6 +490,9 @@ def process_cnab_file(arquivo, operacoes_desejadas=None, banco=None, separar_ant
                     linhas_antecipadas.append(linha)
                     linhas_mantidas += 1
                     continue
+                
+                # Contar apenas registros de dados (não header/trailer) como linhas válidas
+                linhas_validas += 1
                 
                 # Extrair código da operação (posição pode variar de acordo com o layout)
                 codigo_operacao = None
@@ -570,21 +578,23 @@ def process_cnab_file(arquivo, operacoes_desejadas=None, banco=None, separar_ant
                 print(f"💾 Arquivo antecipado salvo: {os.path.basename(arquivo_antecipado)} ({tamanho_antecipado:.2f} KB)")
                 arquivos_gerados.append((arquivo_antecipado, tamanho_antecipado))
                 
-                # Gerar CSV para operações antecipadas
-                if generate_csv_for_antecipated_operations:
+                # Gerar arquivo de saída (CSV/XLS) para operações antecipadas
+                if generate_output_for_antecipated_operations:
                     try:
-                        sucesso_csv, mensagem_csv, caminho_csv = generate_csv_for_antecipated_operations(arquivo_antecipado)
-                        if sucesso_csv and caminho_csv:
-                            tamanho_csv = os.path.getsize(caminho_csv) / 1024  # KB
-                            print(f"📊 CSV antecipado gerado: {os.path.basename(caminho_csv)} ({tamanho_csv:.2f} KB)")
-                            arquivos_gerados.append((caminho_csv, tamanho_csv))
-                            relatorio.append(f"📊 CSV: {mensagem_csv}")
+                        output_format = os.getenv('OUTPUT_FORMAT', 'csv').upper()
+                        sucesso_output, mensagem_output, caminho_output = generate_output_for_antecipated_operations(arquivo_antecipado)
+                        if sucesso_output and caminho_output:
+                            tamanho_output = os.path.getsize(caminho_output) / 1024  # KB
+                            print(f"📈 {output_format} antecipado gerado: {os.path.basename(caminho_output)} ({tamanho_output:.2f} KB)")
+                            arquivos_gerados.append((caminho_output, tamanho_output))
+                            relatorio.append(f"📈 {output_format}: {mensagem_output}")
                         else:
-                            print(f"⚠️ Falha ao gerar CSV: {mensagem_csv}")
-                            relatorio.append(f"⚠️ CSV: {mensagem_csv}")
+                            print(f"⚠️ Falha ao gerar {output_format}: {mensagem_output}")
+                            relatorio.append(f"⚠️ {output_format}: {mensagem_output}")
                     except Exception as e:
-                        print(f"❌ Erro ao gerar CSV: {str(e)}")
-                        relatorio.append(f"❌ Erro CSV: {str(e)}")
+                        output_format = os.getenv('OUTPUT_FORMAT', 'csv').upper()
+                        print(f"❌ Erro ao gerar {output_format}: {str(e)}")
+                        relatorio.append(f"❌ Erro {output_format}: {str(e)}")
             else:
                 print("⚠️ Nenhuma operação antecipada encontrada, arquivo antecipado não gerado")
                 relatorio.append("⚠️ ALERTA: Nenhuma operação antecipada encontrada")
@@ -625,17 +635,24 @@ def process_cnab_file(arquivo, operacoes_desejadas=None, banco=None, separar_ant
                             print(f"💾 Arquivo antecipado copiado: {os.path.basename(destino_antecipado)} ({tamanho:.2f} KB)")
                             arquivos_gerados.append((destino_antecipado, tamanho))
                             
-                            # Copia o CSV antecipado se existir
-                            csv_antecipado = arquivo_antecipado.replace('.ret', '.csv').replace('.RET', '.csv')
-                            if os.path.exists(csv_antecipado):
-                                destino_csv = os.path.join(output_dir, os.path.basename(csv_antecipado))
+                            # Copia o arquivo de saída (CSV/XLS) antecipado se existir
+                            output_format = os.getenv('OUTPUT_FORMAT', 'csv').lower()
+                            if output_format == 'xls':
+                                output_antecipado = arquivo_antecipado.replace('.ret', '.xlsx').replace('.RET', '.xlsx')
+                            else:
+                                output_antecipado = arquivo_antecipado.replace('.ret', '.csv').replace('.RET', '.csv')
+                            
+                            if os.path.exists(output_antecipado):
+                                destino_output = os.path.join(output_dir, os.path.basename(output_antecipado))
                                 try:
-                                    shutil.copy2(csv_antecipado, destino_csv)
-                                    tamanho_csv = os.path.getsize(destino_csv) / 1024  # KB
-                                    print(f"📊 CSV antecipado copiado: {os.path.basename(destino_csv)} ({tamanho_csv:.2f} KB)")
-                                    arquivos_gerados.append((destino_csv, tamanho_csv))
+                                    shutil.copy2(output_antecipado, destino_output)
+                                    tamanho_output = os.path.getsize(destino_output) / 1024  # KB
+                                    format_upper = output_format.upper()
+                                    print(f"📈 {format_upper} antecipado copiado: {os.path.basename(destino_output)} ({tamanho_output:.2f} KB)")
+                                    arquivos_gerados.append((destino_output, tamanho_output))
                                 except Exception as e:
-                                    print(f"❌ Erro ao copiar CSV antecipado para {output_dir}: {str(e)}")
+                                    format_upper = output_format.upper()
+                                    print(f"❌ Erro ao copiar {format_upper} antecipado para {output_dir}: {str(e)}")
                         except Exception as e:
                             print(f"❌ Erro ao copiar arquivo antecipado para {output_dir}: {str(e)}")
     
@@ -653,51 +670,40 @@ def process_cnab_file(arquivo, operacoes_desejadas=None, banco=None, separar_ant
     porcentagem_invalidas = (linhas_invalidas / total_linhas) * 100 if total_linhas > 0 else 0
     porcentagem_mantidas = (linhas_mantidas / total_linhas) * 100 if total_linhas > 0 else 0
     
-    # Adicionar estatísticas ao relatório
-    relatorio.append(f"  • Linhas válidas: {linhas_validas} ({porcentagem_validas:.2f}%)")
-    relatorio.append(f"  • Linhas inválidas: {linhas_invalidas} ({porcentagem_invalidas:.2f}%)")
-    relatorio.append(f"  • Linhas mantidas: {linhas_mantidas} ({porcentagem_mantidas:.2f}%)")
-    relatorio.append("")
-    
-    # Adicionar informações de performance
-    relatorio.append(f"⏱️ PERFORMANCE:")
-    relatorio.append(f"  • Tempo de processamento: {tempo_processamento:.2f} segundos")
-    relatorio.append(f"  • Velocidade média: {velocidade_processamento:.2f} linhas/segundo")
-    relatorio.append("")
-    
-    # Adicionar informações de operações
-    relatorio.append(f"🔍 ANÁLISE DE OPERAÇÕES:")
-    for op, count in sorted(contagem_operacoes.items()):
-        mantida = "✓" if not operacoes_desejadas or op in operacoes_desejadas else "✗"
-        percentual_mantido = 100.0 if not operacoes_desejadas or op in operacoes_desejadas else 0.0
-        relatorio.append(f"  • Operação '{op}': {count} linhas ({percentual_mantido:.2f}%) {mantida}")
-    relatorio.append("")
-    
-    # Adicionar informações de tipos de operação
-    total_com_tipo = operacoes_normais + operacoes_antecipadas
-    relatorio.append(f"💰 SEPARAÇÃO POR TIPO DE VALOR:")
-    relatorio.append(f"  • Operações normais (tipo 2): {operacoes_normais} ({(operacoes_normais/total_com_tipo*100 if total_com_tipo > 0 else 0):.2f}%)")
-    relatorio.append(f"  • Operações antecipadas (tipo 1): {operacoes_antecipadas} ({(operacoes_antecipadas/total_com_tipo*100 if total_com_tipo > 0 else 0):.2f}%)")
-    relatorio.append(f"  • Operações com tipo não identificado: {operacoes_sem_tipo} ({(operacoes_sem_tipo/total_linhas*100 if total_linhas > 0 else 0):.2f}%)")
-    relatorio.append("")
-    
-    # Adicionar lista de arquivos gerados
-    relatorio.append(f"📁 ARQUIVOS GERADOS ({len(arquivos_gerados)}):")
-    for idx, (caminho_arquivo, tamanho) in enumerate(arquivos_gerados, 1):
-        relatorio.append(f"  {idx}. {os.path.basename(caminho_arquivo)} ({tamanho:.2f} KB)")
-        relatorio.append(f"     Local: {os.path.dirname(caminho_arquivo)}")
-    
-    relatorio.append("")
-    relatorio.append("=" * 80)
-    
     # Exibir resumo final
     print(f"\n✅ Processamento concluído em {tempo_processamento:.2f} segundos")
     print(f"📊 Linhas no arquivo: {total_linhas}")
     print(f"📊 Linhas mantidas: {linhas_mantidas} ({porcentagem_mantidas:.2f}%)")
     
+    # Preparar lista de arquivos para o relatório (remover duplicatas por nome de arquivo)
+    arquivos_unicos = {}
+    for caminho, tamanho in arquivos_gerados:
+        nome_arquivo = os.path.basename(caminho)
+        if nome_arquivo not in arquivos_unicos:
+            arquivos_unicos[nome_arquivo] = (caminho, tamanho)
+    
+    arquivos_para_relatorio = [caminho for caminho, _ in arquivos_unicos.values()]
+    
+    # Corrigir registros mantidos (apenas registros de dados, não header/trailer)
+    registros_mantidos_corrigidos = max(0, linhas_mantidas - 2) if total_linhas > 2 else linhas_mantidas
+    
+    # Gerar relatório usando a função corrigida
+    relatorio_texto = generate_processing_report(
+        banco_detectado, 
+        total_linhas, 
+        linhas_validas,  # Já conta apenas registros de dados
+        linhas_invalidas, 
+        registros_mantidos_corrigidos,  # Usar valor corrigido
+        contagem_operacoes,
+        operacoes_normais,
+        operacoes_antecipadas,
+        operacoes_sem_tipo,
+        tempo_processamento,
+        arquivos_para_relatorio
+    )
+    
     # Salvar relatório detalhado em arquivo
-    relatorio_texto = '\n'.join(relatorio)
-    report_path = save_processing_report(banco_detectado, relatorio_texto)
+    report_path = save_processing_report(banco_detectado, relatorio_texto, arquivo, output_dirs)
     if report_path:
         arquivos_gerados.append((report_path, os.path.getsize(report_path) / 1024))
     
@@ -786,13 +792,15 @@ def register_processed_file(filename):
     except Exception as e:
         print(f"Erro ao registrar arquivo processado: {str(e)}")
 
-def save_processing_report(banco, report_content):
+def save_processing_report(banco, report_content, arquivo_processado=None, output_dirs=None):
     """
     Salva o relatório de processamento em arquivo
     
     Args:
         banco (str): Nome do banco identificado para identificação do relatório
         report_content (str): Conteúdo do relatório a ser salvo
+        arquivo_processado (str, optional): Nome do arquivo processado para incluir no nome do relatório
+        output_dirs (list, optional): Lista de diretórios onde copiar o relatório
         
     Returns:
         str or None: Caminho do arquivo de relatório se bem-sucedido, None em caso de erro
@@ -813,10 +821,17 @@ def save_processing_report(banco, report_content):
                 reports_dir = os.path.dirname(os.path.abspath(__file__))
                 print(f"Usando diretório alternativo: {reports_dir}")
         
-        # Gera nome único para o relatório
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        banco_normalizado = ''.join(c if c.isalnum() else '_' for c in banco)  # Normaliza o nome do banco
-        report_filename = f"report_{banco_normalizado}_{timestamp}.txt"
+        # Gera nome do relatório no formato ideal: <nome_arquivo>_relatorio.txt
+        if arquivo_processado:
+            # Remove extensão do nome do arquivo
+            nome_arquivo = os.path.splitext(os.path.basename(arquivo_processado))[0]
+            report_filename = f"{nome_arquivo}_relatorio.txt"
+        else:
+            # Fallback para quando não há arquivo processado
+            banco_normalizado = banco.upper()
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            report_filename = f"{banco_normalizado}_{timestamp}_relatorio.txt"
+            
         report_path = os.path.join(reports_dir, report_filename)
         
         # Salva o relatório em arquivo
@@ -825,6 +840,18 @@ def save_processing_report(banco, report_content):
         
         file_size = os.path.getsize(report_path) / 1024  # KB
         print(f"\n📝 Relatório detalhado salvo em: {report_path} ({file_size:.2f} KB)")
+        
+        # Copia o relatório para os diretórios de saída (pasta da rede)
+        if output_dirs:
+            for output_dir in output_dirs:
+                if output_dir and os.path.exists(output_dir):
+                    try:
+                        destino_report = os.path.join(output_dir, report_filename)
+                        shutil.copy2(report_path, destino_report)
+                        print(f"📝 Relatório copiado para: {destino_report} ({file_size:.2f} KB)")
+                    except Exception as e:
+                        print(f"⚠️ Erro ao copiar relatório para {output_dir}: {str(e)}")
+        
         return report_path
         
     except Exception as e:
